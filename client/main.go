@@ -24,12 +24,6 @@ func main() {
     log.Fatal(parser.Usage(err))
   }
 
-  // host := cmdLineArgs[1]
-  // port := cmdLineArgs[2]
-  // folder := cmdLineArgs[3]
-  // ftpUsername := cmdLineArgs[4]
-  // ftpPassword := cmdLineArgs[5]
-
   log.Printf("Connecting to %s:%s and getting %s", host, port, folder)
 
   addr := net.JoinHostPort(*host, *port)

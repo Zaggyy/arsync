@@ -50,4 +50,16 @@ func main() {
   }
 
   log.Printf("Sent folder name: %s", folder)
+
+  successBit, err := conn.Read([]byte{1})
+
+  if err != nil {
+    log.Fatalf("Could not read server response: %s", err)
+  }
+
+  if successBit == 0 {
+    log.Fatalf("Server did not accept folder name: %s", folder)
+  }
+
+  log.Printf("Server accepted folder name: %s", folder)
 }

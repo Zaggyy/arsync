@@ -11,105 +11,105 @@ import (
 )
 
 func main() {
-  parser := argparse.NewParser("client", "Connects to a server and gets a folder")
-  host := parser.String("H", "host", &argparse.Options{Required: true, Help: "Host to connect to"})
-  port := parser.String("P", "port", &argparse.Options{Required: true, Help: "Port to connect to"})
-  folder := parser.String("f", "folder", &argparse.Options{Required: true, Help: "Folder to get"})
-  ftpUsername := parser.String("u", "username", &argparse.Options{Required: true, Help: "FTP username"})
-  ftpPassword := parser.String("p", "password", &argparse.Options{Required: true, Help: "FTP password"})
+	parser := argparse.NewParser("client", "Connects to a server and gets a folder")
+	host := parser.String("H", "host", &argparse.Options{Required: true, Help: "Host to connect to"})
+	port := parser.String("P", "port", &argparse.Options{Required: true, Help: "Port to connect to"})
+	folder := parser.String("f", "folder", &argparse.Options{Required: true, Help: "Folder to get"})
+	ftpUsername := parser.String("u", "username", &argparse.Options{Required: true, Help: "FTP username"})
+	ftpPassword := parser.String("p", "password", &argparse.Options{Required: true, Help: "FTP password"})
 
-  err := parser.Parse(os.Args)
+	err := parser.Parse(os.Args)
 
-  if err != nil {
-    log.Fatal(parser.Usage(err))
-  }
+	if err != nil {
+		log.Fatal(parser.Usage(err))
+	}
 
-  log.Printf("Connecting to %s:%s and getting %s", host, port, folder)
+	log.Printf("Connecting to %s:%s and getting %s", host, port, folder)
 
-  addr := net.JoinHostPort(*host, *port)
-  conn, err := net.Dial("tcp", addr)
+	addr := net.JoinHostPort(*host, *port)
+	conn, err := net.Dial("tcp", addr)
 
-  if err != nil {
-    log.Fatalf("Could not connect to %s: %s", addr, err)
-  }
+	if err != nil {
+		log.Fatalf("Could not connect to %s: %s", addr, err)
+	}
 
-  defer conn.Close()
-  log.Printf("Connected to %s", addr)
- 
-  // calculate the length of the folder name
-  folderLen := len(*folder)
+	defer conn.Close()
+	log.Printf("Connected to %s", addr)
 
-  if folderLen > 255 {
-    log.Fatalf("Folder name is too long: %s", folder)
-  }
+	// calculate the length of the folder name
+	folderLen := len(*folder)
 
-  // send the length of the folder name along with the folder name
-  _, err = conn.Write([]byte{byte(folderLen)})
+	if folderLen > 255 {
+		log.Fatalf("Folder name is too long: %s", folder)
+	}
 
-  if err != nil {
-    log.Fatalf("Could not send folder length: %s", err)
-  }
+	// send the length of the folder name along with the folder name
+	_, err = conn.Write([]byte{byte(folderLen)})
 
-  _, err = conn.Write([]byte(*folder))
+	if err != nil {
+		log.Fatalf("Could not send folder length: %s", err)
+	}
 
-  if err != nil {
-    log.Fatalf("Could not send folder name: %s", err)
-  }
+	_, err = conn.Write([]byte(*folder))
 
-  log.Printf("Sent folder name: %s", folder)
+	if err != nil {
+		log.Fatalf("Could not send folder name: %s", err)
+	}
 
-  successBit, err := conn.Read([]byte{1})
+	log.Printf("Sent folder name: %s", folder)
 
-  if err != nil {
-    log.Fatalf("Could not read server response: %s", err)
-  }
+	successBit, err := conn.Read([]byte{1})
 
-  if successBit == 0 {
-    log.Fatalf("Server did not accept folder name: %s", folder)
-  }
+	if err != nil {
+		log.Fatalf("Could not read server response: %s", err)
+	}
 
-  log.Printf("Server accepted folder name: %s", folder)
+	if successBit == 0 {
+		log.Fatalf("Server did not accept folder name: %s", folder)
+	}
 
-  ftpAddr := net.JoinHostPort(*host, "21")
-  ftpConn, err := ftp.Dial(ftpAddr)
+	log.Printf("Server accepted folder name: %s", folder)
 
-  if err != nil {
-    log.Fatalf("Could not connect to FTP server: %s", err)
-  }
+	ftpAddr := net.JoinHostPort(*host, "21")
+	ftpConn, err := ftp.Dial(ftpAddr)
 
-  defer ftpConn.Quit()
+	if err != nil {
+		log.Fatalf("Could not connect to FTP server: %s", err)
+	}
 
-  err = ftpConn.Login(*ftpUsername, *ftpPassword)
+	defer ftpConn.Quit()
 
-  if err != nil {
-    log.Fatalf("Could not login to FTP server: %s", err)
-  }
+	err = ftpConn.Login(*ftpUsername, *ftpPassword)
 
-  log.Printf("Logged in to FTP server")
+	if err != nil {
+		log.Fatalf("Could not login to FTP server: %s", err)
+	}
 
-  archiveName := *folder + ".tar.gz"
+	log.Printf("Logged in to FTP server")
 
-  file, err := ftpConn.Retr(archiveName)
+	archiveName := *folder + ".tar.gz"
 
-  if err != nil {
-    log.Fatalf("Could not retrieve file: %s", err)
-  }
+	file, err := ftpConn.Retr(archiveName)
 
-  defer file.Close()
+	if err != nil {
+		log.Fatalf("Could not retrieve file: %s", err)
+	}
 
-  outputFile, err := os.Create(archiveName)
+	defer file.Close()
 
-  if err != nil {
-    log.Fatalf("Could not create file: %s", err)
-  }
+	outputFile, err := os.Create(archiveName)
 
-  defer outputFile.Close()
+	if err != nil {
+		log.Fatalf("Could not create file: %s", err)
+	}
 
-  _, err = io.Copy(outputFile, file)
+	defer outputFile.Close()
 
-  if err != nil {
-    log.Fatalf("Could not write file: %s", err)
-  }
+	_, err = io.Copy(outputFile, file)
 
-  log.Printf("Wrote file: %s", archiveName)
+	if err != nil {
+		log.Fatalf("Could not write file: %s", err)
+	}
+
+	log.Printf("Wrote file: %s", archiveName)
 }

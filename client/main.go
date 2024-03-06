@@ -87,7 +87,7 @@ func main() {
 
 	log.Printf("Logged in to FTP server")
 
-	archiveName := *folder + ".tar.gz"
+	archiveName := *folder + ".zip"
 
 	file, err := ftpConn.Retr(archiveName)
 

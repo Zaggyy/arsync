@@ -1,11 +1,13 @@
 package main
 
 import (
+	"archive/zip"
+	"io"
 	"log"
 	"net"
+	"os"
 	"path"
-
-	"github.com/walle/targz"
+	"path/filepath"
 )
 
 type Command struct {
@@ -32,7 +34,7 @@ func HandleRequest(conn net.Conn, env Env) {
 
 	log.Printf("Compressing %s...", filePath)
 
-	err = targz.Compress(filePath, path.Join(env.OutputPath, command.FilePath+".tar.gz"))
+  err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
 
 	if err != nil {
 		log.Printf("Failed to compress %s: %v", filePath, err)
@@ -69,4 +71,59 @@ func ReadCommand(conn net.Conn, command *Command) error {
 
 	command.FilePath = string(filePath)
 	return nil
+}
+
+func zipSource(source, target string) error {
+    f, err := os.Create(target)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    writer := zip.NewWriter(f)
+    defer writer.Close()
+
+    return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        header, err := zip.FileInfoHeader(info)
+
+        if err != nil {
+            return err
+        }
+
+        header.Method = zip.Deflate
+        header.Name, err = filepath.Rel(filepath.Dir(source), path)
+
+        if err != nil {
+            return err
+        }
+
+        if info.IsDir() {
+            header.Name += "/"
+        }
+
+        headerWriter, err := writer.CreateHeader(header)
+
+        if err != nil {
+            return err
+        }
+
+        if info.IsDir() {
+            return nil
+        }
+
+        f, err := os.Open(path)
+
+        if err != nil {
+            return err
+        }
+
+        defer f.Close()
+
+        _, err = io.Copy(headerWriter, f)
+        return err
+    })
 }

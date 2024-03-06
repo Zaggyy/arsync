@@ -4,10 +4,28 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/akamensky/argparse"
 )
 
+type Env struct {
+	Port       string
+	BasePath   string
+	OutputPath string
+}
+
 func main() {
-	env := GetEnvironment()
+  parser := argparse.NewParser("server", "arsync server")
+  port := parser.String("p", "port", &argparse.Options{Required: false, Help: "Port to listen on", Default: "8080"})
+  basePath := parser.String("p", "path", &argparse.Options{Required: false, Help: "Base path to serve", Default: "."})
+  outputPath := parser.String("o", "output", &argparse.Options{Required: false, Help: "Path to your FTP directory", Default: "."})
+
+  env := Env{
+    Port: *port,
+    BasePath: *basePath,
+    OutputPath: *outputPath,
+  }
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", env.Port))
 
 	if err != nil {
@@ -23,6 +41,6 @@ func main() {
 			continue
 		}
 
-		go HandleRequest(conn)
+		go HandleRequest(conn, env)
 	}
 }

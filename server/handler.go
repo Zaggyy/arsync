@@ -13,7 +13,7 @@ type Command struct {
 	FilePath       string
 }
 
-func HandleRequest(conn net.Conn) {
+func HandleRequest(conn net.Conn, env Env) {
 	defer conn.Close()
 	log.Printf("Accepted connection from %s", conn.RemoteAddr())
 	response := byte(1)
@@ -27,8 +27,6 @@ func HandleRequest(conn net.Conn) {
 	}
 
 	log.Printf("Received command: %s", command.FilePath)
-
-	env := GetEnvironment()
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 

@@ -24,23 +24,23 @@ func main() {
 		log.Fatal(parser.Usage(err))
 	}
 
-	log.Printf("Connecting to %s:%s and getting %s", host, port, folder)
+	log.Printf("Connecting to %s:%s and getting %s", *host, *port, *folder)
 
 	addr := net.JoinHostPort(*host, *port)
 	conn, err := net.Dial("tcp", addr)
 
 	if err != nil {
-		log.Fatalf("Could not connect to %s: %s", addr, err)
+		log.Fatalf("Could not connect to %s: %s", *addr, err)
 	}
 
 	defer conn.Close()
-	log.Printf("Connected to %s", addr)
+	log.Printf("Connected to %s", *addr)
 
 	// calculate the length of the folder name
 	folderLen := len(*folder)
 
 	if folderLen > 255 {
-		log.Fatalf("Folder name is too long: %s", folder)
+		log.Fatalf("Folder name is too long: %s", *folder)
 	}
 
 	// send the length of the folder name along with the folder name
@@ -56,7 +56,7 @@ func main() {
 		log.Fatalf("Could not send folder name: %s", err)
 	}
 
-	log.Printf("Sent folder name: %s", folder)
+	log.Printf("Sent folder name: %s", *folder)
 
 	successBit, err := conn.Read([]byte{1})
 
@@ -65,10 +65,10 @@ func main() {
 	}
 
 	if successBit == 0 {
-		log.Fatalf("Server did not accept folder name: %s", folder)
+		log.Fatalf("Server did not accept folder name: %s", *folder)
 	}
 
-	log.Printf("Server accepted folder name: %s", folder)
+	log.Printf("Server accepted folder name: %s", *folder)
 
 	ftpAddr := net.JoinHostPort(*host, "21")
 	ftpConn, err := ftp.Dial(ftpAddr)
@@ -84,8 +84,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not login to FTP server: %s", err)
 	}
-
-	log.Printf("Logged in to FTP server")
 
 	archiveName := *folder + ".zip"
 

@@ -12,9 +12,9 @@ import (
 )
 
 func fatalErr(format string, args ...interface{}) {
-  log.Printf(format, args...)
-  time.Sleep(5 * time.Second)
-  os.Exit(1)
+	log.Printf(format, args...)
+	time.Sleep(5 * time.Second)
+	os.Exit(1)
 }
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 	err := parser.Parse(os.Args)
 
 	if err != nil {
-		log.Fatal(parser.Usage(err))
+		fatalErr(parser.Usage(err))
 	}
 
 	log.Printf("Connecting to %s:%s and getting %s", *host, *port, *folder)
@@ -37,71 +37,17 @@ func main() {
 	conn, err := net.Dial("tcp", addr)
 
 	if err != nil {
-    fatalErr("Could not connect to %s: %s", addr, err)
+		fatalErr("Could not connect to %s: %s", addr, err)
 	}
 
 	defer conn.Close()
 	log.Printf("Connected to %s", addr)
 
-	// calculate the length of the folder name
-	folderLen := len(*folder)
-
-  if folderLen == 0 {
-    fatalErr("Folder name is empty")
-  }
-
-	if folderLen > 255 {
-    fatalErr("Folder name is too long: %d", folderLen)
-	}
-
-  // check if the folder name is valid (no slashes)
-  for i := 0; i < folderLen; i++ {
-    if (*folder)[i] == '/' {
-      fatalErr("No slashes allowed in folder name")
-    }
-
-    if (*folder)[i] == '\\' {
-      fatalErr("No backslashes allowed in folder name")
-    }
-
-    if (*folder)[i] == '*' {
-      fatalErr("No asterisks allowed in folder name")
-    }
-
-  }
-
-	// send the length of the folder name along with the folder name
-	_, err = conn.Write([]byte{byte(folderLen)})
-
-	if err != nil {
-    fatalErr("Could not send folder name length: %s", err)
-	}
-
-	_, err = conn.Write([]byte(*folder))
-
-	if err != nil {
-    fatalErr("Could not send folder name: %s", err)
-	}
-
-	log.Printf("Sent folder name: %s", *folder)
-
-	successBit, err := conn.Read([]byte{1})
-
-	if err != nil {
-    fatalErr("Could not read success bit: %s", err)
-	}
-
-	if successBit == 0 {
-    fatalErr("Server did not accept folder name: %s", *folder)
-	}
-
-	log.Printf("Server accepted folder name: %s", *folder)
-
 	ftpAddr := net.JoinHostPort(*host, "21")
 	ftpConn, err := ftp.Dial(ftpAddr)
 
 	if err != nil {
-    fatalErr("Could not connect to FTP server: %s", err)
+		fatalErr("Could not connect to FTP server: %s", err)
 	}
 
 	defer ftpConn.Quit()
@@ -109,15 +55,69 @@ func main() {
 	err = ftpConn.Login(*ftpUsername, *ftpPassword)
 
 	if err != nil {
-    fatalErr("Could not login to FTP server: %s", err)
+		fatalErr("Could not login to FTP server: %s", err)
 	}
+
+	// calculate the length of the folder name
+	folderLen := len(*folder)
+
+	if folderLen == 0 {
+		fatalErr("Folder name is empty")
+	}
+
+	if folderLen > 255 {
+		fatalErr("Folder name is too long: %d", folderLen)
+	}
+
+	// check if the folder name is valid (no slashes)
+	for i := 0; i < folderLen; i++ {
+		if (*folder)[i] == '/' {
+			fatalErr("No slashes allowed in folder name")
+		}
+
+		if (*folder)[i] == '\\' {
+			fatalErr("No backslashes allowed in folder name")
+		}
+
+		if (*folder)[i] == '*' {
+			fatalErr("No asterisks allowed in folder name")
+		}
+
+	}
+
+	// send the length of the folder name along with the folder name
+	_, err = conn.Write([]byte{byte(folderLen)})
+
+	if err != nil {
+		fatalErr("Could not send folder name length: %s", err)
+	}
+
+	_, err = conn.Write([]byte(*folder))
+
+	if err != nil {
+		fatalErr("Could not send folder name: %s", err)
+	}
+
+	log.Printf("Sent folder name: %s", *folder)
+
+	successBit, err := conn.Read([]byte{1})
+
+	if err != nil {
+		fatalErr("Could not read success bit: %s", err)
+	}
+
+	if successBit == 0 {
+		fatalErr("Server did not accept folder name: %s", *folder)
+	}
+
+	log.Printf("Server accepted folder name: %s", *folder)
 
 	archiveName := *folder + ".zip"
 
 	file, err := ftpConn.Retr(archiveName)
 
 	if err != nil {
-    fatalErr("Could not retrieve file: %s", err)
+		fatalErr("Could not retrieve file: %s", err)
 	}
 
 	defer file.Close()
@@ -125,7 +125,7 @@ func main() {
 	outputFile, err := os.Create(archiveName)
 
 	if err != nil {
-    fatalErr("Could not create file: %s", err)
+		fatalErr("Could not create file: %s", err)
 	}
 
 	defer outputFile.Close()
@@ -133,7 +133,7 @@ func main() {
 	_, err = io.Copy(outputFile, file)
 
 	if err != nil {
-    fatalErr("Could not write file: %s", err)
+		fatalErr("Could not write file: %s", err)
 	}
 
 	log.Printf("Wrote file: %s", archiveName)

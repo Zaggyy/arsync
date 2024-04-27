@@ -13,7 +13,7 @@ import (
 
 func fatalErr(format string, args ...interface{}) {
   log.Printf(format, args...)
-  time.Sleep(10 * time.Second)
+  time.Sleep(5 * time.Second)
   os.Exit(1)
 }
 

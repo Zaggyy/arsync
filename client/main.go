@@ -59,6 +59,15 @@ func main() {
     if (*folder)[i] == '/' {
       fatalErr("No slashes allowed in folder name")
     }
+
+    if (*folder)[i] == '\\' {
+      fatalErr("No backslashes allowed in folder name")
+    }
+
+    if (*folder)[i] == '*' {
+      fatalErr("No asterisks allowed in folder name")
+    }
+
   }
 
 	// send the length of the folder name along with the folder name

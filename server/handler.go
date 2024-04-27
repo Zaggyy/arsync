@@ -33,21 +33,20 @@ func HandleRequest(conn net.Conn, env Env) {
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 
-	log.Printf("Compressing %s...", filePath)
-
-  if _, err := os.Stat(filePath); os.IsNotExist(err) {
-    log.Printf("Folder %s does not exist", filePath)
-    err = errors.New("Folder does not exist")
-  } else {
-    err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
-  }
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		log.Printf("Folder %s does not exist", filePath)
+		err = errors.New("Folder does not exist")
+	} else {
+		log.Printf("Compressing %s...", filePath)
+		err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
+	}
 
 	if err != nil {
 		log.Printf("Failed to compress %s: %v", filePath, err)
 		response = byte(0)
 	} else {
-	  log.Printf("Compressed %s", filePath)
-  }
+		log.Printf("Compressed %s", filePath)
+	}
 
 	_, err = conn.Write([]byte{response})
 
@@ -80,56 +79,56 @@ func ReadCommand(conn net.Conn, command *Command) error {
 }
 
 func zipSource(source, target string) error {
-    f, err := os.Create(target)
-    if err != nil {
-        return err
-    }
-    defer f.Close()
+	f, err := os.Create(target)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
 
-    writer := zip.NewWriter(f)
-    defer writer.Close()
+	writer := zip.NewWriter(f)
+	defer writer.Close()
 
-    return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        header, err := zip.FileInfoHeader(info)
+		header, err := zip.FileInfoHeader(info)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        header.Method = zip.Deflate
-        header.Name, err = filepath.Rel(filepath.Dir(source), path)
+		header.Method = zip.Deflate
+		header.Name, err = filepath.Rel(filepath.Dir(source), path)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        if info.IsDir() {
-            header.Name += "/"
-        }
+		if info.IsDir() {
+			header.Name += "/"
+		}
 
-        headerWriter, err := writer.CreateHeader(header)
+		headerWriter, err := writer.CreateHeader(header)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        if info.IsDir() {
-            return nil
-        }
+		if info.IsDir() {
+			return nil
+		}
 
-        f, err := os.Open(path)
+		f, err := os.Open(path)
 
-        if err != nil {
-            return err
-        }
+		if err != nil {
+			return err
+		}
 
-        defer f.Close()
+		defer f.Close()
 
-        _, err = io.Copy(headerWriter, f)
-        return err
-    })
+		_, err = io.Copy(headerWriter, f)
+		return err
+	})
 }

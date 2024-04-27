@@ -5,10 +5,17 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/akamensky/argparse"
 	"github.com/jlaffaye/ftp"
 )
+
+func fatalErr(format string, args ...interface{}) {
+  log.Printf(format, args...)
+  time.Sleep(10 * time.Second)
+  os.Exit(1)
+}
 
 func main() {
 	parser := argparse.NewParser("client", "Connects to a server and gets a folder")
@@ -30,30 +37,41 @@ func main() {
 	conn, err := net.Dial("tcp", addr)
 
 	if err != nil {
-		log.Fatalf("Could not connect to %s: %s", *addr, err)
+    fatalErr("Could not connect to %s: %s", addr, err)
 	}
 
 	defer conn.Close()
-	log.Printf("Connected to %s", *addr)
+	log.Printf("Connected to %s", addr)
 
 	// calculate the length of the folder name
 	folderLen := len(*folder)
 
+  if folderLen == 0 {
+    fatalErr("Folder name is empty")
+  }
+
 	if folderLen > 255 {
-		log.Fatalf("Folder name is too long: %s", *folder)
+    fatalErr("Folder name is too long: %d", folderLen)
 	}
+
+  // check if the folder name is valid (no slashes)
+  for i := 0; i < folderLen; i++ {
+    if (*folder)[i] == '/' {
+      fatalErr("No slashes allowed in folder name")
+    }
+  }
 
 	// send the length of the folder name along with the folder name
 	_, err = conn.Write([]byte{byte(folderLen)})
 
 	if err != nil {
-		log.Fatalf("Could not send folder length: %s", err)
+    fatalErr("Could not send folder name length: %s", err)
 	}
 
 	_, err = conn.Write([]byte(*folder))
 
 	if err != nil {
-		log.Fatalf("Could not send folder name: %s", err)
+    fatalErr("Could not send folder name: %s", err)
 	}
 
 	log.Printf("Sent folder name: %s", *folder)
@@ -61,11 +79,11 @@ func main() {
 	successBit, err := conn.Read([]byte{1})
 
 	if err != nil {
-		log.Fatalf("Could not read server response: %s", err)
+    fatalErr("Could not read success bit: %s", err)
 	}
 
 	if successBit == 0 {
-		log.Fatalf("Server did not accept folder name: %s", *folder)
+    fatalErr("Server did not accept folder name: %s", *folder)
 	}
 
 	log.Printf("Server accepted folder name: %s", *folder)
@@ -74,7 +92,7 @@ func main() {
 	ftpConn, err := ftp.Dial(ftpAddr)
 
 	if err != nil {
-		log.Fatalf("Could not connect to FTP server: %s", err)
+    fatalErr("Could not connect to FTP server: %s", err)
 	}
 
 	defer ftpConn.Quit()
@@ -82,7 +100,7 @@ func main() {
 	err = ftpConn.Login(*ftpUsername, *ftpPassword)
 
 	if err != nil {
-		log.Fatalf("Could not login to FTP server: %s", err)
+    fatalErr("Could not login to FTP server: %s", err)
 	}
 
 	archiveName := *folder + ".zip"
@@ -90,7 +108,7 @@ func main() {
 	file, err := ftpConn.Retr(archiveName)
 
 	if err != nil {
-		log.Fatalf("Could not retrieve file: %s", err)
+    fatalErr("Could not retrieve file: %s", err)
 	}
 
 	defer file.Close()
@@ -98,7 +116,7 @@ func main() {
 	outputFile, err := os.Create(archiveName)
 
 	if err != nil {
-		log.Fatalf("Could not create file: %s", err)
+    fatalErr("Could not create file: %s", err)
 	}
 
 	defer outputFile.Close()
@@ -106,7 +124,7 @@ func main() {
 	_, err = io.Copy(outputFile, file)
 
 	if err != nil {
-		log.Fatalf("Could not write file: %s", err)
+    fatalErr("Could not write file: %s", err)
 	}
 
 	log.Printf("Wrote file: %s", archiveName)

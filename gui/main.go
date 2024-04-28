@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 
 	"fyne.io/fyne/v2"
@@ -39,9 +40,13 @@ type Values struct {
 	ProjectName string
 }
 
-var CLIENT_EXE = "arsync_client.exe"
+var CLIENT_EXE = "arsync_client"
 
 func main() {
+	if runtime.GOOS == "windows" {
+		CLIENT_EXE = "arsync_client.exe"
+	}
+
 	defaultValues := Values{
 		Username:    "",
 		Password:    "",
@@ -74,7 +79,7 @@ func main() {
 
 	// If the client exe is not found show an error
 	if _, err := os.Stat(CLIENT_EXE); os.IsNotExist(err) {
-		errorLabel := widget.NewLabel("Client executable not found. Please put `arsync_client.exe` in the same directory as the GUI.")
+		errorLabel := widget.NewLabel("Client executable not found. Please put `" + CLIENT_EXE + "` in the same directory as the GUI.")
 		window.SetContent(fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
 			errorLabel,
 			quitButton,

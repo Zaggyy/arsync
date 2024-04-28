@@ -1,5 +1,4 @@
 #!/bin/sh
-
-CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build
+fyne-cross windows -arch=amd64
 
 echo "Built for Windows"

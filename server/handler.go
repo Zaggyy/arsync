@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"errors"
 	"io"
 	"log"
 	"net"
@@ -33,20 +32,26 @@ func HandleRequest(conn net.Conn, env Env) {
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		log.Printf("Folder %s does not exist", filePath)
-		err = errors.New("Folder does not exist")
-	} else {
-		log.Printf("Compressing %s...", filePath)
-		err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
-	}
+  var shouldCompress bool = false
+  _, err = os.Stat(filePath)
+  
+  if os.IsNotExist(err) {
+    log.Printf("Folder %s does not exist", filePath)
+    response = byte(0)
+    shouldCompress = false
+  }
 
-	if err != nil {
-		log.Printf("Failed to compress %s: %v", filePath, err)
-		response = byte(0)
-	} else {
-		log.Printf("Compressed %s", filePath)
-	}
+  if shouldCompress {
+    log.Printf("Compressing %s...", filePath)
+    err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
+
+    if err != nil {
+      log.Printf("Failed to compress %s: %v", filePath, err)
+      response = byte(0)
+    } else {
+      log.Printf("Compressed %s", filePath)
+    }
+  }
 
 	_, err = conn.Write([]byte{response})
 

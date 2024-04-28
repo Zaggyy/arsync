@@ -16,18 +16,18 @@ type Env struct {
 }
 
 func main() {
-  parser := argparse.NewParser("server", "arsync server")
-  port := parser.String("l", "port", &argparse.Options{Required: false, Help: "Port to listen on", Default: "8080"})
-  basePath := parser.String("p", "path", &argparse.Options{Required: true, Help: "Base path to serve", Default: "/tmp"})
-  outputPath := parser.String("o", "output", &argparse.Options{Required: true, Help: "Path to your FTP directory", Default: "/tmp/output"})
+	parser := argparse.NewParser("server", "arsync server")
+	port := parser.String("l", "port", &argparse.Options{Required: false, Help: "Port to listen on", Default: "8080"})
+	basePath := parser.String("p", "path", &argparse.Options{Required: true, Help: "Base path to serve", Default: "/tmp"})
+	outputPath := parser.String("o", "output", &argparse.Options{Required: true, Help: "Path to your FTP directory", Default: "/tmp/output"})
 
-  err := parser.Parse(os.Args)
+	err := parser.Parse(os.Args)
 
-  env := Env{
-    Port: *port,
-    BasePath: *basePath,
-    OutputPath: *outputPath,
-  }
+	env := Env{
+		Port:       *port,
+		BasePath:   *basePath,
+		OutputPath: *outputPath,
+	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", env.Port))
 

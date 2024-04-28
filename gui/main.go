@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -65,7 +64,7 @@ func main() {
 	app := app.New()
 	// Create a new window
 	window := app.NewWindow("arsync GUI")
-	window.Resize(fyne.NewSize(800, 300))
+	window.Resize(fyne.NewSize(400, 300))
 	window.SetFixedSize(true)
 
 	// Create a quit button
@@ -160,25 +159,6 @@ func main() {
 			return
 		}
 
-		// If all inputs are valid, run the download command
-		// Run the download command
-		command := exec.Command(CLIENT_EXE, "-H "+host, "-P "+portStr, "-u "+username, "-p "+password, "-f "+projectName)
-		err = command.Run()
-		if err != nil {
-			dialog.ShowInformation(
-				"Error",
-				"An error occurred while downloading the project",
-				window,
-			)
-			return
-		}
-
-		dialog.ShowInformation(
-			"Success",
-			"Project downloaded successfully",
-			window,
-		)
-
 		// Update the default values
 		defaultValues.Username = username
 		defaultValues.Password = password
@@ -194,10 +174,7 @@ func main() {
 				"Could not save last config",
 				window,
 			)
-			return
 		}
-		log.Printf("YAML struct: %v\n", defaultValues)
-		log.Printf("Dumped YAML data: %s\n", d)
 
 		err = os.WriteFile("last_config.yml", d, 0644)
 		if err != nil {
@@ -206,8 +183,27 @@ func main() {
 				"Could not save last config",
 				window,
 			)
+		}
+
+		// If all inputs are valid, run the download command
+		// Run the download command
+		exe := "./" + CLIENT_EXE
+		command := exec.Command(exe, "-H", host, "-P", portStr, "-u", username, "-p", password, "-f", projectName)
+		err = command.Run()
+		if err != nil {
+			dialog.ShowInformation(
+				"Error",
+				"An error occurred while downloading the project",
+				window,
+			)
 			return
 		}
+
+		dialog.ShowInformation(
+			"Success",
+			"Project downloaded successfully",
+			window,
+		)
 	})
 
 	// Attach the inputs to the window

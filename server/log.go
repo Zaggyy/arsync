@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -34,12 +35,12 @@ func SetupLogging() {
 	os.Create("logs/latest.log")
 }
 
-func Log(message string) {
-	log.Printf(message)
+func Log(message string, level string) {
+	log.Printf(fmt.Sprintf("%s: %s", level, message))
 	f, _ := os.OpenFile("logs/latest.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
 
 	log.SetOutput(f)
-	log.Printf(message)
+	log.Printf(fmt.Sprintf("%s: %s", level, message))
 	log.SetOutput(os.Stdout)
 }

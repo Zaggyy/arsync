@@ -17,18 +17,18 @@ type Command struct {
 
 func HandleRequest(conn net.Conn, env Env) {
 	defer conn.Close()
-	Log(fmt.Sprintf("Accepted connection from %s", conn.RemoteAddr()))
+	Log(fmt.Sprintf("Accepted connection from %s", conn.RemoteAddr()), "INFO")
 	response := byte(1)
 
 	command := Command{}
 	err := ReadCommand(conn, &command)
 
 	if err != nil {
-		Log(fmt.Sprintf("Failed to read command: %v", err))
+		Log(fmt.Sprintf("Failed to read command: %v", err), "ERROR")
 		response = byte(0)
 	}
 
-	Log(fmt.Sprintf("Received command: %s", command.FilePath))
+	Log(fmt.Sprintf("Received command: %s", command.FilePath), "INFO")
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 
@@ -36,39 +36,39 @@ func HandleRequest(conn net.Conn, env Env) {
 	_, err = os.Stat(filePath)
 
 	if len(command.FilePath) < 3 || command.FilePathLength < 3 {
-		Log(fmt.Sprintf("Illegal file path (less than 3 characters): %s", filePath))
+		Log(fmt.Sprintf("Illegal file path (less than 3 characters): %s", filePath), "ERROR")
 		response = byte(0)
 		shouldCompress = false
 	}
 
 	if os.IsNotExist(err) {
-		Log(fmt.Sprintf("Folder %s does not exist", filePath))
+		Log(fmt.Sprintf("Folder %s does not exist", filePath), "ERROR")
 		response = byte(0)
 		shouldCompress = false
 	}
 
 	if path.Clean(filePath) != filePath {
-		Log(fmt.Sprintf("Illegal file path: %s", filePath))
+		Log(fmt.Sprintf("Illegal file path: %s", filePath), "ERROR")
 		response = byte(0)
 		shouldCompress = false
 	}
 
 	if shouldCompress {
-		Log(fmt.Sprintf("Compressing %s...", filePath))
+		Log(fmt.Sprintf("Compressing %s...", filePath), "INFO")
 		err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
 
 		if err != nil {
-			Log(fmt.Sprintf("Failed to compress %s: %v", filePath, err))
+			Log(fmt.Sprintf("Failed to compress %s: %v", filePath, err), "ERROR")
 			response = byte(0)
 		} else {
-			Log(fmt.Sprintf("Successfully compressed %s", filePath))
+			Log(fmt.Sprintf("Successfully compressed %s", filePath), "INFO")
 		}
 	}
 
 	_, err = conn.Write([]byte{response})
 
 	if err != nil {
-		Log(fmt.Sprintf("Failed to write response: %v", err))
+		Log(fmt.Sprintf("Failed to write response: %v", err), "ERROR")
 	}
 }
 
@@ -77,7 +77,7 @@ func ReadCommand(conn net.Conn, command *Command) error {
 	_, err := conn.Read(filePathLength)
 
 	if err != nil {
-		Log(fmt.Sprintf("Failed to read file path length: %v", err))
+		Log(fmt.Sprintf("Failed to read file path length: %v", err), "ERROR")
 		return err
 	}
 
@@ -87,7 +87,7 @@ func ReadCommand(conn net.Conn, command *Command) error {
 	_, err = conn.Read(filePath)
 
 	if err != nil {
-		Log(fmt.Sprintf("Failed to read file path: %v", err))
+		Log(fmt.Sprintf("Failed to read file path: %v", err), "ERROR")
 		return err
 	}
 

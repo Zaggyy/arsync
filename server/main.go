@@ -37,6 +37,7 @@ func main() {
 	defer listener.Close()
 
 	log.Printf("Server listening on port %s", env.Port)
+  SetupLogging()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {

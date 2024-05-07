@@ -35,11 +35,11 @@ func HandleRequest(conn net.Conn, env Env) {
 	var shouldCompress bool = false
 	_, err = os.Stat(filePath)
 
-  if len(command.FilePath) < 3 || command.FilePathLength < 3 {
-    log.Printf("Illegal file path: %s", filePath)
-    response = byte(0)
-    shouldCompress = false
-  }
+	if len(command.FilePath) < 3 || command.FilePathLength < 3 {
+		log.Printf("Illegal file path: %s", filePath)
+		response = byte(0)
+		shouldCompress = false
+	}
 
 	if os.IsNotExist(err) {
 		log.Printf("Folder %s does not exist", filePath)
@@ -47,11 +47,11 @@ func HandleRequest(conn net.Conn, env Env) {
 		shouldCompress = false
 	}
 
-  if path.Clean(filePath) != filePath {
-    log.Printf("Illegal file path: %s", filePath)
-    response = byte(0)
-    shouldCompress = false
-  }
+	if path.Clean(filePath) != filePath {
+		log.Printf("Illegal file path: %s", filePath)
+		response = byte(0)
+		shouldCompress = false
+	}
 
 	if shouldCompress {
 		log.Printf("Compressing %s...", filePath)

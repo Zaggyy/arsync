@@ -13,7 +13,7 @@ func SetupLogging() {
 
 	if _, err := os.Stat("logs/latest.log"); err == nil {
 		fStat, _ := os.Stat("logs/latest.log")
-		date := fStat.ModTime().Format("2006-01-02")
+		date := fStat.ModTime().Format("2006-01-02_15:04:05")
 		os.Rename("logs/latest.log", "logs/"+date+".log")
 
 		original, _ := os.Open("logs/" + date + ".log")

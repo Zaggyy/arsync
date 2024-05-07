@@ -32,8 +32,10 @@ func HandleRequest(conn net.Conn, env Env) {
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 
-	var shouldCompress bool = false
-	_, err = os.Stat(filePath)
+	Log(fmt.Sprintf("Checking file path: %s", filePath), "INFO")
+
+	var shouldCompress bool = true
+	_, err = os.Stat(path.Clean(filePath))
 
 	if len(command.FilePath) < 3 || command.FilePathLength < 3 {
 		Log(fmt.Sprintf("Illegal file path (less than 3 characters): %s", filePath), "ERROR")

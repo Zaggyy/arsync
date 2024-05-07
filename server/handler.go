@@ -32,26 +32,38 @@ func HandleRequest(conn net.Conn, env Env) {
 
 	filePath := path.Join(env.BasePath, command.FilePath)
 
-  var shouldCompress bool = false
-  _, err = os.Stat(filePath)
-  
-  if os.IsNotExist(err) {
-    log.Printf("Folder %s does not exist", filePath)
+	var shouldCompress bool = false
+	_, err = os.Stat(filePath)
+
+  if len(command.FilePath) < 3 || command.FilePathLength < 3 {
+    log.Printf("Illegal file path: %s", filePath)
     response = byte(0)
     shouldCompress = false
   }
 
-  if shouldCompress {
-    log.Printf("Compressing %s...", filePath)
-    err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
+	if os.IsNotExist(err) {
+		log.Printf("Folder %s does not exist", filePath)
+		response = byte(0)
+		shouldCompress = false
+	}
 
-    if err != nil {
-      log.Printf("Failed to compress %s: %v", filePath, err)
-      response = byte(0)
-    } else {
-      log.Printf("Compressed %s", filePath)
-    }
+  if path.Clean(filePath) != filePath {
+    log.Printf("Illegal file path: %s", filePath)
+    response = byte(0)
+    shouldCompress = false
   }
+
+	if shouldCompress {
+		log.Printf("Compressing %s...", filePath)
+		err = zipSource(filePath, path.Join(env.OutputPath, command.FilePath+".zip"))
+
+		if err != nil {
+			log.Printf("Failed to compress %s: %v", filePath, err)
+			response = byte(0)
+		} else {
+			log.Printf("Compressed %s", filePath)
+		}
+	}
 
 	_, err = conn.Write([]byte{response})
 

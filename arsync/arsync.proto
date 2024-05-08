@@ -10,6 +10,8 @@ service Arsync {
 
 message PrepareRequest {
   string path = 1;
+  string username = 2;
+  string password = 3;
 }
 
 message PrepareResponse {

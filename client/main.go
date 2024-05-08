@@ -18,6 +18,8 @@ import (
 var (
   address = flag.String("address", "localhost:1337", "The address of the Arsync server")
   folder = flag.String("folder", "", "The folder to prepare")
+  username = flag.String("username", "admin", "The username for the Arsync server")
+  password = flag.String("password", "password", "The password for the Arsync server")
   ftpUsername = flag.String("username", "", "The username for the FTP server")
   ftpPassword = flag.String("password", "", "The password for the FTP server")
 )
@@ -32,6 +34,10 @@ func main() {
 
   if (len(*ftpUsername) == 0 || len(*ftpPassword) == 0) {
     log.Fatalf("FTP username and password must be provided")
+  }
+
+  if (len(*username) == 0 || len(*password) == 0) {
+    log.Fatalf("Username and password must be provided")
   }
 
   // Create an FTP connection
@@ -60,7 +66,7 @@ func main() {
   ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
   defer cancel()
 
-  response, err := client.Prepare(ctx, &arsync.PrepareRequest{Path: *folder})
+  response, err := client.Prepare(ctx, &arsync.PrepareRequest{Path: *folder, Username: *username, Password: *password})
   if err != nil {
     log.Fatalf("Failed to prepare folder: %v", err)
   }

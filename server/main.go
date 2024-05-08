@@ -17,6 +17,8 @@ var (
   port = flag.Int("port", 1337, "The port the server will listen on")
   basePath = flag.String("base-path", "/tmp", "The base path to search for folders")
   outputPath = flag.String("output-path", "/tmp", "The path to output the zip files")
+  username = flag.String("username", "admin", "The username for the Arsync server")
+  password = flag.String("password", "password", "The password for the Arsync server")
 )
 
 type Server struct {
@@ -24,6 +26,12 @@ type Server struct {
 }
 
 func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsync.PrepareResponse, error) {
+  // Check if the username and password are correct
+  if in.Username != *username || in.Password != *password {
+    Log(fmt.Sprintf("Invalid username or password for %s", in.Username), "ERROR")
+    return &arsync.PrepareResponse{Success: false}, errors.New(fmt.Sprintf("Invalid username or password for %s", in.Username))
+  }
+
   Log(fmt.Sprintf("Received request to prepare %s", in.Path), "INFO")
   preparePath := path.Join(*basePath, in.Path)
   Log(fmt.Sprintf("Calculated path: %s", preparePath), "INFO")
@@ -84,7 +92,8 @@ func main() {
   Log(fmt.Sprintf("Arsync server listening on %v", listener.Addr()), "INFO")
   Log(fmt.Sprintf("Configured with base path: %s", *basePath), "INFO")
   Log(fmt.Sprintf("Configured with output path: %s", *outputPath), "INFO")
-  
+  Log(fmt.Sprintf("Configured with username: %s and password: %s", *username, *password), "INFO")
+
   if err := server.Serve(listener); err != nil {
     Log(fmt.Sprintf("Failed to start Arsync server: %v", err), "ERROR")
   }

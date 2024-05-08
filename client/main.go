@@ -1,140 +1,96 @@
 package main
 
 import (
+	"arsync/arsync"
+	"context"
+	"flag"
 	"io"
 	"log"
 	"net"
 	"os"
 	"time"
 
-	"github.com/akamensky/argparse"
 	"github.com/jlaffaye/ftp"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-func fatalErr(format string, args ...interface{}) {
-	log.Printf(format, args...)
-	time.Sleep(5 * time.Second)
-	os.Exit(1)
-}
+var (
+  address = flag.String("address", "localhost:1337", "The address of the Arsync server")
+  folder = flag.String("folder", "", "The folder to prepare")
+  ftpUsername = flag.String("username", "", "The username for the FTP server")
+  ftpPassword = flag.String("password", "", "The password for the FTP server")
+)
 
 func main() {
-	parser := argparse.NewParser("client", "Connects to a server and gets a folder")
-	host := parser.String("H", "host", &argparse.Options{Required: true, Help: "Host to connect to"})
-	port := parser.String("P", "port", &argparse.Options{Required: true, Help: "Port to connect to"})
-	folder := parser.String("f", "folder", &argparse.Options{Required: true, Help: "Folder to get"})
-	ftpUsername := parser.String("u", "username", &argparse.Options{Required: true, Help: "FTP username"})
-	ftpPassword := parser.String("p", "password", &argparse.Options{Required: true, Help: "FTP password"})
+  flag.Parse()
 
-	err := parser.Parse(os.Args)
+  if len(*folder) == 0 {
+    flag.Usage()
+    return
+  }
 
-	if err != nil {
-		fatalErr(parser.Usage(err))
-	}
+  if (len(*ftpUsername) == 0 || len(*ftpPassword) == 0) {
+    log.Fatalf("FTP username and password must be provided")
+  }
 
-	log.Printf("Connecting to %s:%s and getting %s", *host, *port, *folder)
+  // Create an FTP connection
+  ftpAddr := net.JoinHostPort(*address, "21")
+  ftpConn, err := ftp.Dial(ftpAddr, ftp.DialWithTimeout(time.Second * 10))
+  if err != nil {
+    log.Fatalf("Failed to connect to FTP server: %v", err)
+  }
+  defer ftpConn.Quit()
 
-	addr := net.JoinHostPort(*host, *port)
-	conn, err := net.Dial("tcp", addr)
+  // Login to the FTP server
+  err = ftpConn.Login(*ftpUsername, *ftpPassword)
+  if err != nil {
+    log.Fatalf("Failed to login to FTP server: %v", err)
+  }
 
-	if err != nil {
-		fatalErr("Could not connect to %s: %s", addr, err)
-	}
+  // Connect to the Arsync server
+  conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+  if err != nil {
+    log.Fatalf("Failed to connect to Arsync server: %v", err)
+  }
+  defer conn.Close()
 
-	defer conn.Close()
-	log.Printf("Connected to %s", addr)
+  client := arsync.NewArsyncClient(conn)
 
-	ftpAddr := net.JoinHostPort(*host, "21")
-	ftpConn, err := ftp.Dial(ftpAddr)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+  defer cancel()
 
-	if err != nil {
-		fatalErr("Could not connect to FTP server: %s", err)
-	}
+  response, err := client.Prepare(ctx, &arsync.PrepareRequest{Path: *folder})
+  if err != nil {
+    log.Fatalf("Failed to prepare folder: %v", err)
+  }
 
-	defer ftpConn.Quit()
+  if (!response.Success) {
+    log.Fatalf("Failed to prepare folder: %s", *folder)
+  }
 
-	err = ftpConn.Login(*ftpUsername, *ftpPassword)
+  // Download the zip file
+  log.Printf("Downloading zip file %s", *folder + ".zip")
+  archiveName := *folder + ".zip"
 
-	if err != nil {
-		fatalErr("Could not login to FTP server: %s", err)
-	}
+  archiveFile, err := ftpConn.Retr(archiveName)
+  if err != nil {
+    log.Fatalf("Failed to download zip file: %v", err)
+  }
+  defer archiveFile.Close()
 
-	// calculate the length of the folder name
-	folderLen := len(*folder)
+  // Create the file
+  file, err := os.Create(archiveName)
+  if err != nil {
+    log.Fatalf("Failed to create file: %v", err)
+  }
+  defer file.Close()
 
-	if folderLen == 0 {
-		fatalErr("Folder name is empty")
-	}
+  // Copy the file
+  _, err = io.Copy(file, archiveFile)
+  if err != nil {
+    log.Fatalf("Failed to copy file: %v", err)
+  }
 
-	if folderLen > 255 {
-		fatalErr("Folder name is too long: %d", folderLen)
-	}
-
-	// check if the folder name is valid (no slashes)
-	for i := 0; i < folderLen; i++ {
-		if (*folder)[i] == '/' {
-			fatalErr("No slashes allowed in folder name")
-		}
-
-		if (*folder)[i] == '\\' {
-			fatalErr("No backslashes allowed in folder name")
-		}
-
-		if (*folder)[i] == '*' {
-			fatalErr("No asterisks allowed in folder name")
-		}
-
-	}
-
-	// send the length of the folder name along with the folder name
-	_, err = conn.Write([]byte{byte(folderLen)})
-
-	if err != nil {
-		fatalErr("Could not send folder name length: %s", err)
-	}
-
-	_, err = conn.Write([]byte(*folder))
-
-	if err != nil {
-		fatalErr("Could not send folder name: %s", err)
-	}
-
-	log.Printf("Sent folder name: %s", *folder)
-
-	successBit, err := conn.Read([]byte{1})
-
-	if err != nil {
-		fatalErr("Could not read success bit: %s", err)
-	}
-
-	if successBit == 0 {
-		fatalErr("Server did not accept folder name: %s", *folder)
-	}
-
-	log.Printf("Server accepted folder name: %s", *folder)
-
-	archiveName := *folder + ".zip"
-
-	file, err := ftpConn.Retr(archiveName)
-
-	if err != nil {
-		fatalErr("Could not retrieve file: %s", err)
-	}
-
-	defer file.Close()
-
-	outputFile, err := os.Create(archiveName)
-
-	if err != nil {
-		fatalErr("Could not create file: %s", err)
-	}
-
-	defer outputFile.Close()
-
-	_, err = io.Copy(outputFile, file)
-
-	if err != nil {
-		fatalErr("Could not write file: %s", err)
-	}
-
-	log.Printf("Wrote file: %s", archiveName)
+  log.Printf("Successfully downloaded zip file %s", archiveName)
 }

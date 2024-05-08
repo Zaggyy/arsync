@@ -20,9 +20,13 @@ jobs:
         run: cd server && sh build.sh && cd ..
       - name: Build client 
         run: cd client && sh build.sh && cd ..
-      - name: Upload artifacts
+      - name: Upload server artifact
         uses: actions/upload-artifact@v2
         with:
-          name: build
-          path: server/build
-          path: client/build
+          name: server
+          path: server/server
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: client
+          path: client/client.exe

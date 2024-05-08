@@ -6,33 +6,48 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 )
 
-func SetupLogging() {
-	os.Mkdir("logs", 0755)
+const LOG_FOLDER_NAME = "logs"
 
-	if _, err := os.Stat("logs/latest.log"); err == nil {
-		fStat, _ := os.Stat("logs/latest.log")
-		date := fStat.ModTime().Format("2006-01-02_15_04_05")
-		os.Rename("logs/latest.log", "logs/"+date+".log")
+func PrepareLogs() {
+  // Create the logs folder if it doesn't exist
+  if _, err := os.Stat(LOG_FOLDER_NAME); os.IsNotExist(err) {
+    os.Mkdir(LOG_FOLDER_NAME, 0755)
+  }
 
-		original, _ := os.Open("logs/" + date + ".log")
-		defer original.Close()
+  var latestLogPath string = path.Join(LOG_FOLDER_NAME, "latest.log") // logs/latest.log
 
-		compressed, _ := os.Create("logs/" + date + ".log.gz")
-		defer compressed.Close()
+  // Check if latest.log exists
+  if _, err := os.Stat(latestLogPath); err == nil {
+    // Rename it to a timestamped log
+    fStat, _ := os.Stat(latestLogPath)
+    lastModified := fStat.ModTime().Format("2006-01-02_15-04-05")
+    lastModifiedLogPath := path.Join(LOG_FOLDER_NAME, lastModified + ".log") // logs/2021-01-01_12-00-00.log
 
-		writer := gzip.NewWriter(compressed)
-		defer writer.Close()
+    os.Rename(latestLogPath, path.Join(LOG_FOLDER_NAME, lastModifiedLogPath))
+    
+    // Compress the log
+    originalLog, _ := os.Open(lastModifiedLogPath)
+    defer originalLog.Close()
 
-		io.Copy(writer, original)
+    compressedLog, _ := os.Create(lastModifiedLogPath + ".gz")
+    defer compressedLog.Close()
 
-		writer.Flush()
+    // Create a gzip writer
+    w := gzip.NewWriter(compressedLog)
+    defer w.Close()
 
-		os.Remove("logs/" + date + ".log")
-	}
+    io.Copy(w, originalLog)
+    w.Flush()
 
-	os.Create("logs/latest.log")
+    // Remove the original log
+    os.Remove(latestLogPath)
+  }
+
+  // Create the new latest.log
+  os.Create(latestLogPath)
 }
 
 func Log(message string, level string) {

@@ -1,0 +1,28 @@
+name: Build server and client
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+      - name: Download dependencies
+        run: go mod tidy
+      - name: Build server
+        run: cd server && sh build.sh && cd ..
+      - name: Build client 
+        run: cd client && sh build.sh && cd ..
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: server/build
+          path: client/build

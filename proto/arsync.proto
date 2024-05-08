@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "github.com/arsync/main";
+
+package arsync;
+
+service Arsync {
+  rpc Prepare(PrepareRequest) returns (PrepareResponse) {}
+}
+
+message PrepareRequest {
+  string path = 1;
+}
+
+message PrepareResponse {
+  bool success = 1;
+}

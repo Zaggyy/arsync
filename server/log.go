@@ -50,12 +50,12 @@ func PrepareLogs() {
 	os.Create(latestLogPath)
 }
 
-func Log(message string, level string) {
-	log.Printf(fmt.Sprintf("%s: %s", level, message))
+func Log(message string, level string, ip string) {
+	log.Printf(fmt.Sprintf("%s: %s - %s", level, message, ip))
 	f, _ := os.OpenFile("logs/latest.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
 
 	log.SetOutput(f)
-	log.Printf(fmt.Sprintf("%s: %s", level, message))
+	log.Printf(fmt.Sprintf("%s: %s - %s", level, message, ip))
 	log.SetOutput(os.Stdout)
 }

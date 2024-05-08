@@ -8,10 +8,10 @@ then the client downloads the archive via FTP.
 ## Usage
 ### Server
 ```bash
-./server -port 1337 -base-path /path/to/folder -output-path /path/to/ftp
+./server -port 1337 -base-path /path/to/folder -output-path /path/to/ftp -username server-username -password server-password
 ```
 
 ### Client
 ```bash
-./client -address localhost:1337 -folder folder-name -username ftp-username -password ftp-password
+./client -address localhost:1337 -folder folder-name -username server-username -password server-password -ftp-username ftp-username -ftp-password ftp-password
 ```

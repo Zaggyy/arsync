@@ -20,8 +20,8 @@ var (
 	folder      = flag.String("folder", "", "The folder to prepare")
 	username    = flag.String("username", "admin", "The username for the Arsync server")
 	password    = flag.String("password", "password", "The password for the Arsync server")
-	ftpUsername = flag.String("username", "", "The username for the FTP server")
-	ftpPassword = flag.String("password", "", "The password for the FTP server")
+	ftpUsername = flag.String("ftp-username", "", "The username for the FTP server")
+	ftpPassword = flag.String("ftp-password", "", "The password for the FTP server")
 )
 
 func main() {

@@ -12,42 +12,42 @@ import (
 const LOG_FOLDER_NAME = "logs"
 
 func PrepareLogs() {
-  // Create the logs folder if it doesn't exist
-  if _, err := os.Stat(LOG_FOLDER_NAME); os.IsNotExist(err) {
-    os.Mkdir(LOG_FOLDER_NAME, 0755)
-  }
+	// Create the logs folder if it doesn't exist
+	if _, err := os.Stat(LOG_FOLDER_NAME); os.IsNotExist(err) {
+		os.Mkdir(LOG_FOLDER_NAME, 0755)
+	}
 
-  var latestLogPath string = path.Join(LOG_FOLDER_NAME, "latest.log") // logs/latest.log
+	var latestLogPath string = path.Join(LOG_FOLDER_NAME, "latest.log") // logs/latest.log
 
-  // Check if latest.log exists
-  if _, err := os.Stat(latestLogPath); err == nil {
-    // Rename it to a timestamped log
-    fStat, _ := os.Stat(latestLogPath)
-    lastModified := fStat.ModTime().Format("2006-01-02_15-04-05")
-    lastModifiedLogPath := path.Join(LOG_FOLDER_NAME, lastModified + ".log") // logs/2021-01-01_12-00-00.log
+	// Check if latest.log exists
+	if _, err := os.Stat(latestLogPath); err == nil {
+		// Rename it to a timestamped log
+		fStat, _ := os.Stat(latestLogPath)
+		lastModified := fStat.ModTime().Format("2006-01-02_15-04-05")
+		lastModifiedLogPath := path.Join(LOG_FOLDER_NAME, lastModified+".log") // logs/2021-01-01_12-00-00.log
 
-    os.Rename(latestLogPath, path.Join(LOG_FOLDER_NAME, lastModifiedLogPath))
-    
-    // Compress the log
-    originalLog, _ := os.Open(lastModifiedLogPath)
-    defer originalLog.Close()
+		os.Rename(latestLogPath, path.Join(LOG_FOLDER_NAME, lastModifiedLogPath))
 
-    compressedLog, _ := os.Create(lastModifiedLogPath + ".gz")
-    defer compressedLog.Close()
+		// Compress the log
+		originalLog, _ := os.Open(lastModifiedLogPath)
+		defer originalLog.Close()
 
-    // Create a gzip writer
-    w := gzip.NewWriter(compressedLog)
-    defer w.Close()
+		compressedLog, _ := os.Create(lastModifiedLogPath + ".gz")
+		defer compressedLog.Close()
 
-    io.Copy(w, originalLog)
-    w.Flush()
+		// Create a gzip writer
+		w := gzip.NewWriter(compressedLog)
+		defer w.Close()
 
-    // Remove the original log
-    os.Remove(latestLogPath)
-  }
+		io.Copy(w, originalLog)
+		w.Flush()
 
-  // Create the new latest.log
-  os.Create(latestLogPath)
+		// Remove the original log
+		os.Remove(latestLogPath)
+	}
+
+	// Create the new latest.log
+	os.Create(latestLogPath)
 }
 
 func Log(message string, level string) {

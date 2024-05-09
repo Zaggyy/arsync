@@ -28,9 +28,9 @@ var (
 )
 
 func FatalLogWithSleep(message string, sleep time.Duration) {
-  log.Printf(message)
-  time.Sleep(sleep)
-  os.Exit(1)
+	log.Printf(message)
+	time.Sleep(sleep)
+	os.Exit(1)
 }
 
 func main() {
@@ -38,8 +38,8 @@ func main() {
 
 	if len(*folder) == 0 {
 		flag.Usage()
-    time.Sleep(SLEEP_TIME)
-    os.Exit(1)
+		time.Sleep(SLEEP_TIME)
+		os.Exit(1)
 	}
 
 	if len(*ftpUsername) == 0 || len(*ftpPassword) == 0 {
@@ -47,28 +47,28 @@ func main() {
 	}
 
 	if len(*username) == 0 || len(*password) == 0 {
-    FatalLogWithSleep("Username and password must be provided", SLEEP_TIME)
+		FatalLogWithSleep("Username and password must be provided", SLEEP_TIME)
 	}
 
 	// Create an FTP connection
 	ftpAddr := net.JoinHostPort(*address, "21")
 	ftpConn, err := ftp.Dial(ftpAddr, ftp.DialWithTimeout(time.Second*10))
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to connect to the FTP server: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to connect to the FTP server: %v", err), SLEEP_TIME)
 	}
 	defer ftpConn.Quit()
 
 	// Login to the FTP server
 	err = ftpConn.Login(*ftpUsername, *ftpPassword)
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to login to the FTP server: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to login to the FTP server: %v", err), SLEEP_TIME)
 	}
-  log.Printf("Successfully logged in to the FTP server")
+	log.Printf("Successfully logged in to the FTP server")
 
 	// Connect to the Arsync server
 	conn, err := grpc.Dial(*address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to connect to Arsync server: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to connect to Arsync server: %v", err), SLEEP_TIME)
 	}
 	defer conn.Close()
 
@@ -79,11 +79,11 @@ func main() {
 
 	response, err := client.Prepare(ctx, &arsync.PrepareRequest{Path: *folder, Username: *username, Password: *password})
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %v", err), SLEEP_TIME)
 	}
 
 	if !response.Success {
-    FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %s", *folder), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %s", *folder), SLEEP_TIME)
 	}
 
 	// Download the zip file
@@ -92,23 +92,23 @@ func main() {
 
 	archiveFile, err := ftpConn.Retr(archiveName)
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to download zip file: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to download zip file: %v", err), SLEEP_TIME)
 	}
 	defer archiveFile.Close()
 
 	// Create the file
 	file, err := os.Create(archiveName)
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to create file: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to create file: %v", err), SLEEP_TIME)
 	}
 	defer file.Close()
 
 	// Copy the file
 	_, err = io.Copy(file, archiveFile)
 	if err != nil {
-    FatalLogWithSleep(fmt.Sprintf("Failed to copy file: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to copy file: %v", err), SLEEP_TIME)
 	}
 
 	log.Printf("Successfully downloaded zip file %s", archiveName)
-  time.Sleep(SLEEP_TIME)
+	time.Sleep(SLEEP_TIME)
 }

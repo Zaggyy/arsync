@@ -8,12 +8,9 @@ fi
 # Format the code
 echo "Formatting code..."
 
-cd client || exit
-gofmt -w ./*.go
-
-cd ../server || exit
-gofmt -w ./*.go
-
-cd .. || exit
+for folder in client server; do
+  echo "Formatting $folder..."
+  (cd $folder && gofmt -w ./*.go)
+done
 
 echo "Done"

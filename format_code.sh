@@ -8,12 +8,12 @@ fi
 # Format the code
 echo "Formatting code..."
 
-cd client
-gofmt -w *.go
+cd client || exit
+gofmt -w ./*.go
 
-cd ../server
-gofmt -w *.go
+cd ../server || exit
+gofmt -w ./*.go
 
-cd ..
+cd .. || exit
 
 echo "Done"

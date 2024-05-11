@@ -84,7 +84,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	response, err := client.Prepare(ctx, &arsync.PrepareRequest{Path: *folder, Username: *username, Password: *password})
+	response, err := client.Prepare(ctx, &arsync.PrepareRequest{
+		Path: *folder,
+		Auth: &arsync.AuthenticatedRequest{
+			Username: *username,
+			Password: *password,
+		},
+	})
 	if err != nil {
 		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %v", err), SLEEP_TIME)
 	}

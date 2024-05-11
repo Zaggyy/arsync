@@ -102,7 +102,7 @@ func (s *Server) List(ctx context.Context, in *arsync.ListRequest) (*arsync.List
 	}
 
 	// List all the directories in the base path
-	files, err = ioutil.ReadDir(*basePath)
+	files, err := ioutil.ReadDir(*basePath)
 	if err != nil {
 		Log(fmt.Sprintf("Failed to list directories in %s: %v", *basePath, err), "ERROR", ip)
 		return &arsync.ListResponse{Files: []string{}}, err

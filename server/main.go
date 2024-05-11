@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -31,9 +32,9 @@ func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsyn
 	p, _ := peer.FromContext(ctx)
 	ip := p.Addr.String()
 	// Check if the username and password are correct
-	if in.Username != *username || in.Password != *password {
-		Log(fmt.Sprintf("Invalid username or password for %s", in.Username), "ERROR", ip)
-		return &arsync.PrepareResponse{Success: false}, errors.New(fmt.Sprintf("Invalid username or password for %s", in.Username))
+	if in.Auth.Username != *username || in.Auth.Password != *password {
+		Log("Invalid username and/or password", "ERROR", ip)
+		return &arsync.PrepareResponse{Success: false}, errors.New("Invalid username and/or password")
 	}
 
 	Log(fmt.Sprintf("Received request to prepare %s", in.Path), "INFO", ip)
@@ -80,6 +81,41 @@ func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsyn
 	}
 
 	return &arsync.PrepareResponse{Success: true}, nil
+}
+
+func (s *Server) List(ctx context.Context, in *arsync.ListRequest) (*arsync.ListResponse, error) {
+	// Get the IP address of the client
+	p, _ := peer.FromContext(ctx)
+	ip := p.Addr.String()
+	// Check if the username and password are correct
+	if in.Auth.Username != *username || in.Auth.Password != *password {
+		Log("Invalid username and/or password", "ERROR", ip)
+		return &arsync.ListResponse{Files: []string{}}, errors.New("Invalid username and/or password")
+	}
+
+	Log(fmt.Sprintf("Received request to list %s", *basePath), "INFO", ip)
+
+	// Check if the path exists
+	if _, err := os.Stat(*basePath); os.IsNotExist(err) {
+		Log(fmt.Sprintf("Path %s does not exist", *basePath), "ERROR", ip)
+		return &arsync.ListResponse{Files: []string{}}, errors.New(fmt.Sprintf("Path %s does not exist", *basePath))
+	}
+
+	// List all the directories in the base path
+	files, err = ioutil.ReadDir(*basePath)
+	if err != nil {
+		Log(fmt.Sprintf("Failed to list directories in %s: %v", *basePath, err), "ERROR", ip)
+		return &arsync.ListResponse{Files: []string{}}, err
+	}
+	// Filter out the directories
+	var directories []string
+	for _, file := range files {
+		if file.IsDir() {
+			directories = append(directories, file.Name())
+		}
+	}
+
+	return &arsync.ListResponse{Files: directories}, nil
 }
 
 func main() {

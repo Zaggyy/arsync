@@ -6,14 +6,28 @@ package arsync;
 
 service Arsync {
   rpc Prepare(PrepareRequest) returns (PrepareResponse) {}
+  rpc List(ListRequest) returns (ListResponse) {}
+}
+
+message AuthenticatedRequest {
+  string username = 1;
+  string password = 2;
 }
 
 message PrepareRequest {
   string path = 1;
-  string username = 2;
-  string password = 3;
+  AuthenticatedRequest auth = 2;
 }
 
 message PrepareResponse {
   bool success = 1;
+}
+
+message ListRequest {
+  string path = 1;
+  AuthenticatedRequest auth = 2;
+}
+
+message ListResponse {
+  repeated string files = 1;
 }

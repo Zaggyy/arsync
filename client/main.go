@@ -51,7 +51,14 @@ func main() {
 	}
 
 	// Create an FTP connection
-	ftpAddr := net.JoinHostPort(*address, "21")
+  // Extract host from address
+  host, _, err := net.SplitHostPort(*address)
+
+  if err != nil {
+    FatalLogWithSleep(fmt.Sprintf("Failed to extract host from address: %v", err), SLEEP_TIME)
+  }
+
+	ftpAddr := net.JoinHostPort(host, "21")
 	ftpConn, err := ftp.Dial(ftpAddr, ftp.DialWithTimeout(time.Second*10))
 	if err != nil {
 		FatalLogWithSleep(fmt.Sprintf("Failed to connect to the FTP server: %v", err), SLEEP_TIME)

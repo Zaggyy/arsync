@@ -11,7 +11,12 @@ then the client downloads the archive via FTP.
 ./server -port 1337 -base-path /path/to/folder -output-path /path/to/ftp -username server-username -password server-password
 ```
 
-### Client
+### Client 
+#### Prepare & Download
 ```bash
 ./client -address localhost:1337 -folder folder-name -username server-username -password server-password -ftp-username ftp-username -ftp-password ftp-password
+```
+#### List Directories
+```bash
+./client -address localhost:1337 -username server-username -password server-password -command list
 ```

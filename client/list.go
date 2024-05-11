@@ -4,7 +4,6 @@ import (
 	"arsync/arsync"
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"google.golang.org/grpc"
@@ -43,10 +42,7 @@ func ExecuteList(request ListRequest) {
 		FatalLogWithSleep(fmt.Sprintf("Failed to list files: %v", err), SLEEP_TIME)
 	}
 
-	log.Printf("Listing files in %s", request.address)
 	for _, file := range response.Files {
 		fmt.Println(file)
 	}
-
-	log.Printf("Listed %d files", len(response.Files))
 }

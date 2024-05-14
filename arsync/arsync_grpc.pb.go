@@ -23,7 +23,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ArsyncClient interface {
 	Prepare(ctx context.Context, in *PrepareRequest, opts ...grpc.CallOption) (*PrepareResponse, error)
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type arsyncClient struct {
@@ -43,21 +42,11 @@ func (c *arsyncClient) Prepare(ctx context.Context, in *PrepareRequest, opts ...
 	return out, nil
 }
 
-func (c *arsyncClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, "/arsync.Arsync/List", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ArsyncServer is the server API for Arsync service.
 // All implementations must embed UnimplementedArsyncServer
 // for forward compatibility
 type ArsyncServer interface {
 	Prepare(context.Context, *PrepareRequest) (*PrepareResponse, error)
-	List(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedArsyncServer()
 }
 
@@ -67,9 +56,6 @@ type UnimplementedArsyncServer struct {
 
 func (UnimplementedArsyncServer) Prepare(context.Context, *PrepareRequest) (*PrepareResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Prepare not implemented")
-}
-func (UnimplementedArsyncServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedArsyncServer) mustEmbedUnimplementedArsyncServer() {}
 
@@ -102,24 +88,6 @@ func _Arsync_Prepare_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Arsync_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ArsyncServer).List(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/arsync.Arsync/List",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ArsyncServer).List(ctx, req.(*ListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Arsync_ServiceDesc is the grpc.ServiceDesc for Arsync service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,10 +98,6 @@ var Arsync_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Prepare",
 			Handler:    _Arsync_Prepare_Handler,
-		},
-		{
-			MethodName: "List",
-			Handler:    _Arsync_List_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

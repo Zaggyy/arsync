@@ -6,7 +6,6 @@ package arsync;
 
 service Arsync {
   rpc Prepare(PrepareRequest) returns (PrepareResponse) {}
-  rpc List(ListRequest) returns (ListResponse) {}
 }
 
 message AuthenticatedRequest {
@@ -21,11 +20,6 @@ message PrepareRequest {
 
 message PrepareResponse {
   bool success = 1;
-}
-
-message ListRequest {
-  string path = 1;
-  AuthenticatedRequest auth = 2;
 }
 
 message ListResponse {

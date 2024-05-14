@@ -1,13 +1,13 @@
 package main
 
 import (
-	"arsync/arsync"
-	"context"
 	"fmt"
+	"log"
+	"net"
 	"strings"
 	"time"
 
-	"google.golang.org/grpc"
+	"github.com/jlaffaye/ftp"
 )
 
 type ListRequest struct {
@@ -21,27 +21,38 @@ func ExecuteList(request ListRequest) {
 		FatalLogWithSleep("Username and password must be provided")
 	}
 
-	// Connect to the Arsync server
-	conn, err := grpc.Dial(request.address, grpc.WithInsecure())
+	// Extract host from address
+	host, _, err := net.SplitHostPort(request.address)
+
 	if err != nil {
-		FatalLogWithSleep(fmt.Sprintf("Failed to connect to Arsync server: %v", err))
+		FatalLogWithSleep(fmt.Sprintf("Failed to extract host from address: %v", err))
 	}
-	defer conn.Close()
 
-	client := arsync.NewArsyncClient(conn)
+	// Create an FTP connection
+	ftpAddr := net.JoinHostPort(host, "21")
+	ftpConn, err := ftp.Dial(ftpAddr, ftp.DialWithTimeout(time.Second*10))
+	if err != nil {
+		FatalLogWithSleep(fmt.Sprintf("Failed to connect to the FTP server: %v", err))
+	}
+	defer ftpConn.Quit()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	// Login to the FTP server
+	err = ftpConn.Login(request.username, request.password)
+	if err != nil {
+		FatalLogWithSleep(fmt.Sprintf("Failed to login to the FTP server: %v", err))
+	}
+	log.Printf("Successfully logged in to the FTP server")
 
-	response, err := client.List(ctx, &arsync.ListRequest{
-		Auth: &arsync.AuthenticatedRequest{
-			Username: request.username,
-			Password: request.password,
-		},
-	})
+	// List files in the FTP server
+	files, err := ftpConn.List("/")
 	if err != nil {
 		FatalLogWithSleep(fmt.Sprintf("Failed to list files: %v", err))
 	}
 
-	fmt.Println(strings.Join(response.Files, ","))
+	var fileNames []string
+	for _, file := range files {
+		fileNames = append(fileNames, file.Name)
+	}
+
+	fmt.Println(strings.Join(fileNames, ","))
 }

@@ -18,13 +18,13 @@ type ListRequest struct {
 
 func ExecuteList(request ListRequest) {
 	if len(request.username) == 0 || len(request.password) == 0 {
-		FatalLogWithSleep("Username and password must be provided", SLEEP_TIME)
+		FatalLogWithSleep("Username and password must be provided")
 	}
 
 	// Connect to the Arsync server
 	conn, err := grpc.Dial(request.address, grpc.WithInsecure())
 	if err != nil {
-		FatalLogWithSleep(fmt.Sprintf("Failed to connect to Arsync server: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to connect to Arsync server: %v", err))
 	}
 	defer conn.Close()
 
@@ -40,7 +40,7 @@ func ExecuteList(request ListRequest) {
 		},
 	})
 	if err != nil {
-		FatalLogWithSleep(fmt.Sprintf("Failed to list files: %v", err), SLEEP_TIME)
+		FatalLogWithSleep(fmt.Sprintf("Failed to list files: %v", err))
 	}
 
 	fmt.Println(strings.Join(response.Files, ","))

@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-const SLEEP_TIME = 5 * time.Second
-
 var (
 	address     = flag.String("address", "localhost:1337", "The address of the Arsync server")
 	folder      = flag.String("folder", "", "The folder to prepare")
@@ -17,16 +15,25 @@ var (
 	ftpUsername = flag.String("ftp-username", "", "The username for the FTP server")
 	ftpPassword = flag.String("ftp-password", "", "The password for the FTP server")
 	command     = flag.String("command", "prepare", "The command to execute. Available commands: prepare, list")
+	waitTime    = flag.Int("wait-time", 5, "The time to wait before closing the program")
 )
 
-func FatalLogWithSleep(message string, sleep time.Duration) {
+func FatalLogWithSleep(message string) {
 	log.Printf(message)
-	time.Sleep(sleep)
+	sleep()
 	os.Exit(1)
 }
 
 func main() {
 	flag.Parse()
+
+	if *waitTime < 0 {
+		FatalLogWithSleep("Invalid wait time")
+	}
+
+	sleepSeconds := time.Duration(*waitTime) * time.Second
+
+	setSleepTime(sleepSeconds)
 
 	switch *command {
 	case "prepare":
@@ -47,6 +54,6 @@ func main() {
 		})
 		break
 	default:
-		FatalLogWithSleep("Invalid command", SLEEP_TIME)
+		FatalLogWithSleep("Invalid command")
 	}
 }

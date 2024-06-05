@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -36,8 +37,11 @@ func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsyn
 		return &arsync.PrepareResponse{Success: false}, errors.New("Invalid username and/or password")
 	}
 
-	Log(fmt.Sprintf("Received request to prepare %s", in.Path), "INFO", ip)
-	preparePath := path.Join(*basePath, in.Path)
+  // Clean up the path
+  cleanPath := strings.TrimSpace(in.Path)
+
+	Log(fmt.Sprintf("Received request to prepare %s", cleanPath), "INFO", ip)
+	preparePath := path.Join(*basePath, cleanPath)
 	Log(fmt.Sprintf("Calculated path: %s", preparePath), "INFO", ip)
 
 	// Check if the path exists
@@ -72,7 +76,7 @@ func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsyn
 
 	// Recursively prepare the folder
 	Log(fmt.Sprintf("Preparing folder %s", preparePath), "INFO", ip)
-	err := RecursivelyZipDirectory(preparePath, path.Join(*outputPath, in.Path+".zip"))
+	err := RecursivelyZipDirectory(preparePath, path.Join(*outputPath, cleanPath+".zip"))
 
 	if err != nil {
 		Log(fmt.Sprintf("Failed to prepare folder %s: %v", preparePath, err), "ERROR", ip)

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
@@ -26,7 +27,9 @@ type PrepareRequest struct {
 }
 
 func ExecutePrepare(request PrepareRequest) {
-	if len(request.folder) == 0 {
+	folder := strings.TrimSpace(request.folder)
+
+	if len(folder) == 0 {
 		flag.Usage()
 		sleep()
 		os.Exit(1)
@@ -71,7 +74,7 @@ func ExecutePrepare(request PrepareRequest) {
 	defer cancel()
 
 	response, err := client.Prepare(ctx, &arsync.PrepareRequest{
-		Path: request.folder,
+		Path: folder,
 		Auth: &arsync.AuthenticatedRequest{
 			Username: request.username,
 			Password: request.password,
@@ -82,12 +85,12 @@ func ExecutePrepare(request PrepareRequest) {
 	}
 
 	if !response.Success {
-		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %s", request.folder))
+		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %s", folder))
 	}
 
 	// Download the zip file
-	log.Printf("Downloading zip file %s", request.folder+".zip")
-	archiveName := request.folder + ".zip"
+	log.Printf("Downloading zip file %s", folder+".zip")
+	archiveName := folder + ".zip"
 
 	archiveFile, err := ftpConn.Retr(archiveName)
 	if err != nil {

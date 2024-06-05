@@ -41,10 +41,10 @@ func ExecuteList(request ListRequest) {
 	if err != nil {
 		FatalLogWithSleep(fmt.Sprintf("Failed to login to the FTP server: %v", err))
 	}
-	log.Printf("Successfully logged in to the FTP server")
+	log.Printf("Successfully logged in to the FTP server,")
 
 	// List files in the FTP server
-	files, err := ftpConn.List("/")
+	files, err := ftpConn.List("/worlds/")
 	if err != nil {
 		FatalLogWithSleep(fmt.Sprintf("Failed to list files: %v", err))
 	}

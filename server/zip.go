@@ -4,7 +4,9 @@ import (
 	"archive/zip"
 	"io"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 )
 
 func RecursivelyZipDirectory(source string, output string) error {
@@ -20,7 +22,7 @@ func RecursivelyZipDirectory(source string, output string) error {
 	defer writer.Close()
 
 	// Walk the source directory
-	return filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -65,5 +67,44 @@ func RecursivelyZipDirectory(source string, output string) error {
 		// Copy the file to the zip archive
 		_, err = io.Copy(file, fileToZip)
 		return err
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Change permissions of the ZIP file to 775
+	if err := os.Chmod(output, 0775); err != nil {
+		return err
+	}
+
+	// Change ownership of the ZIP file to user zaggyy and group ftp_minecraft
+	uid, gid, err := getUIDGID("zaggyy", "ftp_minecraft")
+	if err != nil {
+		return err
+	}
+	if err := os.Chown(output, uid, gid); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// getUIDGID returns the user ID and group ID for a given username and group name
+func getUIDGID(userName, groupName string) (int, int, error) {
+	u, err := user.Lookup(userName)
+	if err != nil {
+		return -1, -1, err
+	}
+	g, err := user.LookupGroup(groupName)
+	if err != nil {
+		return -1, -1, err
+	}
+	uid, err := strconv.Atoi(u.Uid)
+	if err != nil {
+		return -1, -1, err
+	}
+	gid, err := strconv.Atoi(g.Gid)
+	if err != nil {
+		return -1, -1, err
+	}
+	return uid, gid, nil
 }

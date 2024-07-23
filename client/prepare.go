@@ -88,13 +88,13 @@ func ExecutePrepare(request PrepareRequest) {
 		FatalLogWithSleep(fmt.Sprintf("Failed to prepare folder: %s", folder))
 	}
 
-	// Download the zip file
-	log.Printf("Downloading zip file %s", folder+".zip")
-	archiveName := folder + ".zip"
+	// Download the tar.gz file
+	log.Printf("Downloading tar.gz file %s", folder+".tar.gz")
+	archiveName := folder + ".tar.gz"
 
 	archiveFile, err := ftpConn.Retr(archiveName)
 	if err != nil {
-		FatalLogWithSleep(fmt.Sprintf("Failed to download zip file: %v", err))
+		FatalLogWithSleep(fmt.Sprintf("Failed to download tar.gz file: %v", err))
 	}
 	defer archiveFile.Close()
 
@@ -111,6 +111,6 @@ func ExecutePrepare(request PrepareRequest) {
 		FatalLogWithSleep(fmt.Sprintf("Failed to write file: %v", err))
 	}
 
-	log.Printf("Successfully downloaded zip file %s", archiveName)
+	log.Printf("Successfully downloaded tar.gz file %s", archiveName)
 	sleep()
 }

@@ -18,7 +18,7 @@ import (
 var (
 	port       = flag.Int("port", 1337, "The port the server will listen on")
 	basePath   = flag.String("base-path", "/tmp", "The base path to search for folders")
-	outputPath = flag.String("output-path", "/tmp", "The path to output the zip files")
+	outputPath = flag.String("output-path", "/tmp", "The path to output the tar.gz files")
 	username   = flag.String("username", "admin", "The username for the Arsync server")
 	password   = flag.String("password", "password", "The password for the Arsync server")
 )
@@ -76,7 +76,7 @@ func (s *Server) Prepare(ctx context.Context, in *arsync.PrepareRequest) (*arsyn
 
 	// Recursively prepare the folder
 	Log(fmt.Sprintf("Preparing folder %s", preparePath), "INFO", ip)
-	err := RecursivelyZipDirectory(preparePath, path.Join(*outputPath, cleanPath+".zip"))
+	err := RecursivelyTarGzipDirectory(preparePath, path.Join(*outputPath, cleanPath+".tar.gz"))
 
 	if err != nil {
 		Log(fmt.Sprintf("Failed to prepare folder %s: %v", preparePath, err), "ERROR", ip)

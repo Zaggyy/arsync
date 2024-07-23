@@ -1,7 +1,8 @@
 package main
 
 import (
-	"archive/zip"
+	"archive/tar"
+	"compress/gzip"
 	"io"
 	"os"
 	"os/user"
@@ -9,7 +10,7 @@ import (
 	"strconv"
 )
 
-func RecursivelyZipDirectory(source string, output string) error {
+func RecursivelyTarGzipDirectory(source string, output string) error {
 	// Create the output file
 	outFile, err := os.Create(output)
 	if err != nil {
@@ -17,9 +18,13 @@ func RecursivelyZipDirectory(source string, output string) error {
 	}
 	defer outFile.Close()
 
-	// Create a new zip writer
-	writer := zip.NewWriter(outFile)
-	defer writer.Close()
+	// Create a gzip writer
+	gzipWriter := gzip.NewWriter(outFile)
+	defer gzipWriter.Close()
+
+	// Create a tar writer
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
 
 	// Walk the source directory
 	if err := filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
@@ -27,28 +32,20 @@ func RecursivelyZipDirectory(source string, output string) error {
 			return err
 		}
 
-		// Create a new file header
-		header, err := zip.FileInfoHeader(info)
+		// Create a new tar header
+		header, err := tar.FileInfoHeader(info, path)
 		if err != nil {
 			return err
 		}
 
-		// Set the method to deflate
-		header.Method = zip.Deflate
 		// Set the name of the file to the relative path
 		header.Name, err = filepath.Rel(filepath.Dir(source), path)
 		if err != nil {
 			return err
 		}
 
-		// Check if the file is a directory
-		if info.IsDir() {
-			header.Name += "/"
-		}
-
-		// Create the file in the zip archive
-		file, err := writer.CreateHeader(header)
-		if err != nil {
+		// Write the header to the tar archive
+		if err := tarWriter.WriteHeader(header); err != nil {
 			return err
 		}
 
@@ -58,25 +55,25 @@ func RecursivelyZipDirectory(source string, output string) error {
 		}
 
 		// Open the file
-		fileToZip, err := os.Open(path)
+		fileToTar, err := os.Open(path)
 		if err != nil {
 			return err
 		}
-		defer fileToZip.Close()
+		defer fileToTar.Close()
 
-		// Copy the file to the zip archive
-		_, err = io.Copy(file, fileToZip)
+		// Copy the file to the tar archive
+		_, err = io.Copy(tarWriter, fileToTar)
 		return err
 	}); err != nil {
 		return err
 	}
 
-	// Change permissions of the ZIP file to 775
+	// Change permissions of the tar.gz file to 775
 	if err := os.Chmod(output, 0775); err != nil {
 		return err
 	}
 
-	// Change ownership of the ZIP file to user zaggyy and group ftp_minecraft
+	// Change ownership of the tar.gz file to user zaggyy and group ftp_minecraft
 	uid, gid, err := getUIDGID("zaggyy", "ftp_minecraft")
 	if err != nil {
 		return err
